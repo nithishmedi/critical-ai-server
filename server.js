@@ -7,51 +7,68 @@ app.use(cors());
 app.use(express.json());
 
 app.post("/chat", async (req, res) => {
-  try {
-    const message = req.body.message;
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: message
-                }
-              ]
-            }
-          ]
-        })
-      }
-    );
+try {
 
-    const data = await response.json();
+const message = req.body.message;
 
-    const reply =
-      data.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "No response";
+const response = await fetch(
+`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+{
+method: "POST",
+headers: {
+"Content-Type": "application/json"
+},
+body: JSON.stringify({
+contents: [
+{
+parts: [
+{
+text: message
+}
+]
+}
+]
+})
+}
+);
 
-    res.json({ reply });
+const data = await response.json();
 
-  } catch (error) {
-    res.json({
-      reply: "Error connecting to Gemini"
-    });
-  }
+console.log("Gemini Response:", JSON.stringify(data));
+
+if(data.error){
+return res.json({
+reply: "Gemini Error: " + data.error.message
+});
+}
+
+const reply =
+data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+res.json({
+reply: reply || "No response from Gemini"
 });
 
-app.get("/", (req, res) => {
-  res.send("Critical AI Running");
+}
+catch(error){
+
+console.log(error);
+
+res.json({
+reply: "Server Error"
+});
+
+}
+
+});
+
+app.get("/", (req,res)=>{
+res.send("Critical AI Running");
 });
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-  console.log("Server Started");
+app.listen(PORT, ()=>{
+console.log("Server Started");
 });
