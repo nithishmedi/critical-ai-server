@@ -12,8 +12,18 @@ try {
 
 const message = req.body.message;
 
+const models = [
+"gemini-2.5-flash",
+"gemini-2.0-flash",
+"gemini-1.5-flash"
+];
+
+let data = null;
+
+for (const model of models) {
+
 const response = await fetch(
-`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`,
 {
 method: "POST",
 headers: {
@@ -33,13 +43,20 @@ text: message
 }
 );
 
-const data = await response.json();
+data = await response.json();
 
-console.log("Gemini Response:", JSON.stringify(data));
+console.log(`Model: ${model}`);
+console.log(JSON.stringify(data));
 
-if(data.error){
+if (!data.error) {
+break;
+}
+
+}
+
+if (!data || data.error) {
 return res.json({
-reply: "Gemini Error: " + data.error.message
+reply: "⚠️ AI is busy. Please try again in a few seconds."
 });
 }
 
